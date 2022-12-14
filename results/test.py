@@ -212,6 +212,36 @@ def linear_model_dimensionality_eval(plot = True):
         plt.show()
     return df
 
+# Test contamination estimate against dimensionality
+def contamination_examination(contamination = 2): # contamination = (0, 100)
+    baz = BAZUOD()
+    x = []
+    y = []
+    g = []
+    prec = 0
+    dsize = 3500 / contamination - 35
+    for d in range(1, 1001, 10):
+        data, labels = detached_label(skew_norm_pdf(30, 5, int(dsize), d))
+        baz.fit(data)
+        est = baz.estimate_best_contamination()
+        error = abs(contamination - est)
+        x.append(d)
+        y.append(est)
+        g.append(contamination)
+        prec += (1 - error / contamination) * 100
+    
+    print(f'Accuracy: {(prec / len(x)):.2f}%')
+    plt.ylim(top = 100)
+    plt.ylim(bottom = 0)
+    plt.plot(x, y, label = 'Est. contamination')
+    plt.plot(x, g, label = 'Ground Truth')
+    plt.xlabel('Dimension')
+    plt.ylabel('Contamination')
+    plt.legend()
+    plt.show()
+    
+    
+
 # Linear regression
 def linear_modeling(x, y, plot = True, x_title = 'Outlier proportion (in percentage)', y_title = 'Gaussian kernal'):
     n = np.size(x)
@@ -299,21 +329,20 @@ if __name__ == "__main__":
     np.random.seed(48)
     random.seed(48)
 
-    # baz = BAZUOD()
-    # data, labels = detached_label(skew_norm_pdf(30, 5, 35, 1))
-    # baz.fit(data)
-    # print(baz.estimate_best_contamination())
-    # exit()
+    contamination_examination(36)
 
-    # df = plot_gaussian_kernel_curve()
+    # df = plot_gaussian_kernel_curve(2000)
     # b = linear_modeling(df[0], df[1])
     # print('Linear model: ', b)
+    # exit()
 
     # df = linear_model_dimensionality_eval(plot=False)
     # df.columns = ['deg', 'b', 'a']
     # df.to_csv('dim_eval.csv', index = False)
+
     df = pd.read_csv('dim_eval.csv')
-    # Try and error
+
+    # Polynomial fitting
     for d in range(1, 13):
         a_par = polymodeling(df['deg'], df['a'], d, True, x_title='Dimensionality', y_title='Param a in GK linear model')
         print('A: ', a_par)
